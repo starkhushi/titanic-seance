@@ -40,11 +40,13 @@ def index() -> FileResponse:
 @app.get("/healthz/llm")
 def healthz_llm() -> dict:
     """One tiny Gemma call, so a bad key or quota shows up without reading server logs."""
+    key = os.environ.get("GEMINI_API_KEY", "")
+    info = dict(key_ends=key[-4:] if len(key) > 12 else None)     # enough to tell keys apart, not to use one
     try:
         text = "".join(ghost.stream("Reply with one word.", "Say: ready", max_tokens=20, temperature=0.0))
-        return dict(ok=True, reply=text.strip()[:40])
+        return dict(info, ok=True, reply=text.strip()[:40])
     except ghost.LLMError as e:
-        return dict(ok=False, error=str(e)[:300])
+        return dict(info, ok=False, error=str(e)[:300])
 
 
 @app.get("/healthz")
