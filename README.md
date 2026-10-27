@@ -16,17 +16,22 @@ your profile ──► TabPFN lookup table (29,160 profiles, scored once on Kagg
              using only those numbers and that manifest line
 ```
 
-- **TabPFN v2** ([kaggle/tabpfn_grid](kaggle/tabpfn_grid/tabpfn_grid.py)) is fit on the Kaggle Titanic training set (class, sex, age, siblings/spouse, parents/children, port). It scores every profile the form can make, so the web server doesn't need torch and fits in Render's free 512 MB.
+- **TabPFN-3.5** ([kaggle/tabpfn_grid](kaggle/tabpfn_grid/tabpfn_grid.py)), Prior Labs' open-weight tabular foundation model, is fit on the Kaggle Titanic training set (class, sex, age, siblings/spouse, parents/children, port) on a Kaggle T4. It scores every profile the form can make, so the web server doesn't need torch and fits in Render's free 512 MB. The kernel compares 3.5 against v2 and keeps the one with the better CV log loss.
 - **Python decides every fact** ([app/oracle.py](app/oracle.py)): the survival chance, the what-ifs, and which passengers are closest to you.
 - **Gemma 4** ([app/ghost.py](app/ghost.py)) only narrates. These are real people, so the prompt gives it their manifest line and a short list of well-known facts about the sinking, and tells it not to invent a hometown, a job or a family for them.
 
 5-fold cross-validation on the 891 passengers:
 
-| model | accuracy | AUC |
-|---|---|---|
-| TabPFN v2 | 0.832 | 0.857 |
-| logistic regression | 0.790 | 0.843 |
-| "women survive" rule | 0.787 | – |
+| model | accuracy | AUC | log loss |
+|---|---|---|---|
+| TabPFN-3.5 (used) | 0.825 | 0.857 | 0.416 |
+| TabPFN v2 | 0.832 | 0.857 | 0.428 |
+| logistic regression | 0.790 | 0.843 | 0.459 |
+| "women survive" rule | 0.787 | – | – |
+
+3.5 gives better-calibrated probabilities (lower log loss). That matters more here than accuracy, because the page shows a percentage.
+
+To rerun the kernel with 3.5 you need a Prior Labs key, with the TabPFN-3.5 license accepted at [ux.priorlabs.ai](https://ux.priorlabs.ai). The kernel reads it from a private dataset as `TABPFN_TOKEN`. The 3.5 weights are under a non-commercial license, and so is the survival table they produced; this project is a non-commercial demo.
 
 ## Run it
 

@@ -8,6 +8,6 @@
   "enable_gpu": true,
   "enable_internet": true,
   "competition_sources": ["titanic"],
-  "dataset_sources": [],
+  "dataset_sources": ["starkhushi/titanic-seance-token"],
   "kernel_sources": []
 }

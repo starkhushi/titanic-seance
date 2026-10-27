@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 .env
 .venv/
-kaggle/tabpfn_grid/out/
+kaggle/tabpfn_grid/out*/

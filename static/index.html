@@ -193,7 +193,7 @@ footer{text-align:center;color:var(--faint);font-size:13px;margin-top:28px}
 
   <section class="card how">
     <h2>How the spirits know</h2>
-    <p><b>TabPFN</b>, an open tabular foundation model, learned from the 891 passengers whose fate is recorded (the Kaggle Titanic training set). It ran once over every profile this form can make, 29,160 of them, so the server here only looks the answer up.</p>
+    <p><b>TabPFN-3.5</b>, an open-weight tabular foundation model from Prior Labs, learned from the 891 passengers whose fate is recorded (the Kaggle Titanic training set). It ran once over every profile this form can make, 29,160 of them, so the server here only looks the answer up.</p>
     <table id="cvTable"><tr><th>5-fold check on the 891</th><th>accuracy</th><th>AUC</th></tr></table>
     <p><b>Gemma 4</b>, Google's open-weight model, gives the closest real passenger a voice. Python picks the passenger and computes every number first; Gemma is told to speak only those numbers and the manifest, and not to invent a life story for someone who really lived.</p>
     <p>Code: <a href="https://github.com/starkhushi/titanic-seance">github.com/starkhushi/titanic-seance</a></p>
@@ -359,8 +359,10 @@ if (qs.has("class") || qs.has("age")) {
 fetch("/api/reading", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"})
   .then(r => r.json()).then(r => {
     const t = $("cvTable").tBodies[0], c = r.cv;
-    [["TabPFN v2", c.tabpfn.acc, c.tabpfn.auc], ["Logistic regression", c.logistic.acc, c.logistic.auc],
-     ["“Women survive” rule", c.women_survive.acc, null]].forEach(([n, a, u]) => {
+    const rows = [[r.model.split(" (")[0] + " (used here)", c.tabpfn.acc, c.tabpfn.auc]];
+    if (c["TabPFN v2"] && !r.model.startsWith("TabPFN v2")) rows.push(["TabPFN v2", c["TabPFN v2"].acc, c["TabPFN v2"].auc]);
+    rows.push(["Logistic regression", c.logistic.acc, c.logistic.auc], ["“Women survive” rule", c.women_survive.acc, null]);
+    rows.forEach(([n, a, u]) => {
       const tr = el("tr"); tr.append(el("td", null, n), el("td", null, a.toFixed(3)), el("td", null, u == null ? "–" : u.toFixed(3)));
       t.append(tr);
     });

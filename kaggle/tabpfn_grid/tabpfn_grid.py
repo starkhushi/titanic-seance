@@ -7,7 +7,14 @@ import subprocess
 import sys
 import time
 
-subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tabpfn"], check=False)
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--upgrade", "tabpfn"], check=False)
+
+# TabPFN-3.5 weights need an accepted license; the token sits in a private dataset, not in this code.
+tok = glob.glob("/kaggle/input/**/tabpfn_token.txt", recursive=True)
+if tok:
+    os.environ["TABPFN_TOKEN"] = open(tok[0]).read().strip()
+os.environ["TABPFN_NO_BROWSER"] = "1"
+print("token file:", tok[:1], "length", len(os.environ.get("TABPFN_TOKEN", "")))
 
 import numpy as np
 import pandas as pd
@@ -49,39 +56,49 @@ X, y = encode(train), train["Survived"].to_numpy()
 CAT = [0, 1, 5]
 
 
-def make_model():
-    # Newer tabpfn releases default to gated v2.5 weights; the plain v2 weights download without a token.
-    try:
-        from tabpfn.constants import ModelVersion
-        m = TabPFNClassifier.create_default_for_version(ModelVersion.V2, device=DEVICE)
-        m.set_params(categorical_features_indices=CAT)
-        return m
-    except Exception as e:  # noqa: BLE001
-        print("create_default_for_version unavailable:", repr(e))
-        return TabPFNClassifier(device=DEVICE, categorical_features_indices=CAT)
+from tabpfn.constants import ModelVersion
+
+VERSIONS = {"TabPFN v2": "V2", "TabPFN-3.5": "V3_5"}
 
 
-# ---- honest check: 5-fold CV against two simple baselines
+def make_model(name):
+    m = TabPFNClassifier.create_default_for_version(getattr(ModelVersion, VERSIONS[name]), device=DEVICE)
+    m.set_params(categorical_features_indices=CAT)
+    return m
+
+
+def scores(p):
+    return dict(acc=accuracy_score(y, p > 0.5), auc=roc_auc_score(y, p), logloss=log_loss(y, p))
+
+
+# ---- honest check: 5-fold CV, both TabPFN versions against two simple baselines
 skf = StratifiedKFold(5, shuffle=True, random_state=0)
-oof = np.zeros(len(y))
+folds = list(skf.split(X, y))
+cv = {}
+for name in VERSIONS:
+    try:
+        t0 = time.time()
+        oof = np.zeros(len(y))
+        for tr, va in folds:
+            oof[va] = make_model(name).fit(X[tr], y[tr]).predict_proba(X[va])[:, 1]
+        cv[name] = dict(scores(oof), seconds=round(time.time() - t0, 1))
+    except Exception as e:  # noqa: BLE001 -- e.g. license not accepted for 3.5
+        print(name, "failed:", repr(e)[:500])
 oof_lr = np.zeros(len(y))
-t0 = time.time()
-for tr, va in skf.split(X, y):
-    m = make_model().fit(X[tr], y[tr])
-    oof[va] = m.predict_proba(X[va])[:, 1]
+for tr, va in folds:
     Xl = np.nan_to_num(X, nan=np.nanmedian(X[tr][:, 2]))
-    lr = LogisticRegression(max_iter=2000).fit(Xl[tr], y[tr])
-    oof_lr[va] = lr.predict_proba(Xl[va])[:, 1]
-cv = dict(
-    tabpfn=dict(acc=accuracy_score(y, oof > 0.5), auc=roc_auc_score(y, oof), logloss=log_loss(y, oof)),
-    logistic=dict(acc=accuracy_score(y, oof_lr > 0.5), auc=roc_auc_score(y, oof_lr), logloss=log_loss(y, oof_lr)),
-    women_survive=dict(acc=accuracy_score(y, X[:, 1] == 1)),
-    seconds=round(time.time() - t0, 1),
-)
+    oof_lr[va] = LogisticRegression(max_iter=2000).fit(Xl[tr], y[tr]).predict_proba(Xl[va])[:, 1]
+cv["logistic"] = scores(oof_lr)
+cv["women_survive"] = dict(acc=accuracy_score(y, X[:, 1] == 1))
 print(json.dumps(cv, indent=1))
 
+# keep the version with the better CV log loss (the app shows probabilities, so calibration matters)
+best = min((n for n in VERSIONS if n in cv), key=lambda n: cv[n]["logloss"])
+print("using", best)
+cv["tabpfn"] = cv[best]
+
 # ---- final model on all 891 passengers
-model = make_model().fit(X, y)
+model = make_model(best).fit(X, y)
 pd.DataFrame({"PassengerId": test["PassengerId"],
               "Survived": (model.predict_proba(encode(test))[:, 1] > 0.5).astype(int)}
              ).to_csv(f"{OUT}/submission.csv", index=False)
@@ -95,7 +112,7 @@ probs = np.concatenate([model.predict_proba(grid[i:i + 5000])[:, 1] for i in ran
 print("grid", grid.shape, "scored in", round(time.time() - t0, 1), "s")
 
 table = dict(
-    model=f"TabPFN v2 (tabpfn {getattr(tabpfn, '__version__', '?')})",
+    model=f"{best} (tabpfn {getattr(tabpfn, '__version__', '?')})",
     features=FEATS, ports=PORTS, axes=AXES,
     note="probs is row-major over axes in the order of features (C order)",
     probs=[round(float(p), 4) for p in probs],
