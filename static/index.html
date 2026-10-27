@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Titanic Séance</title>
+<meta name="description" content="Ask the 891 passengers of the Titanic what the night of 15 April 1912 would have done to you. TabPFN reads the manifest, Gemma gives a real passenger's ghost a voice.">
+<meta name="theme-color" content="#07090d">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='26' y='24' width='12' height='32' rx='2' fill='%23e9dcc0'/><path d='M32 6c6 8 7 13 0 18-7-5-6-10 0-18z' fill='%23f4a63a'/></svg>">
+<style>
+:root{
+  --bg:#07090d; --panel:#0f131a; --panel2:#151a23; --line:#262d3a;
+  --ink:#e9e3d6; --dim:#9aa1ad; --faint:#6a7280;
+  --flame:#f4a63a; --flame2:#ffd58a; --lost:#8a94a6; --lived:#e9c46a;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);min-height:100vh;overflow-x:hidden}
+.fog{position:fixed;inset:-20%;pointer-events:none;z-index:0;opacity:.55;
+  background:radial-gradient(40% 30% at 20% 30%,#1b2230 0,transparent 70%),
+             radial-gradient(35% 25% at 80% 60%,#18202c 0,transparent 70%),
+             radial-gradient(50% 35% at 50% 100%,#141a24 0,transparent 70%);
+  animation:drift 40s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate3d(6%,-4%,0) scale(1.08)}}
+main{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:32px 16px 64px}
+header{text-align:center;margin-bottom:28px}
+.candle{width:34px;height:60px;margin:0 auto 10px;position:relative}
+.candle .wax{position:absolute;bottom:0;left:9px;width:16px;height:36px;background:linear-gradient(#efe4cc,#cdbf9f);border-radius:3px}
+.candle .wick{position:absolute;bottom:36px;left:16px;width:2px;height:5px;background:#222}
+.candle .fl{position:absolute;bottom:40px;left:10px;width:14px;height:22px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;
+  background:radial-gradient(circle at 50% 70%,#fff6d8 0,var(--flame2) 30%,var(--flame) 60%,transparent 72%);
+  filter:blur(.4px);transform-origin:50% 100%;animation:flick 1.6s ease-in-out infinite}
+.candle .glow{position:absolute;bottom:20px;left:-40px;width:114px;height:114px;border-radius:50%;
+  background:radial-gradient(circle,rgba(244,166,58,.28),transparent 65%);animation:flick 2.3s ease-in-out infinite}
+@keyframes flick{0%,100%{transform:scale(1) rotate(-1deg);opacity:1}40%{transform:scale(.94,1.06) rotate(2deg);opacity:.9}70%{transform:scale(1.04,.97) rotate(-2deg)}}
+h1{font:600 clamp(30px,7vw,44px)/1.1 var(--serif);letter-spacing:.02em;margin:0 0 8px}
+.lede{color:var(--dim);font:17px/1.5 var(--serif);max-width:520px;margin:0 auto}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+.card h2{font:600 20px/1.2 var(--serif);margin:0 0 14px;color:var(--ink)}
+.field{margin:0 0 16px}
+.field>label,.field>.lab{display:block;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.seg{display:grid;gap:8px;grid-template-columns:repeat(3,1fr)}
+.seg.two{grid-template-columns:repeat(2,1fr)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:block;border:1px solid var(--line);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;background:#0b0e14;transition:border-color .2s,background .2s}
+.seg label small{display:block;color:var(--faint);font-size:12px}
+.seg input:checked+label{border-color:var(--flame);background:#1a1610;box-shadow:0 0 0 1px rgba(244,166,58,.25) inset}
+.seg input:focus-visible+label{outline:2px solid var(--flame2);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:480px){.row{grid-template-columns:1fr}}
+.age{display:flex;align-items:center;gap:12px}
+.age output{font:600 22px var(--serif);min-width:44px;text-align:right}
+input[type=range]{flex:1;accent-color:var(--flame)}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;background:#0b0e14;overflow:hidden}
+.step button{background:none;border:0;color:var(--ink);width:44px;height:42px;font-size:20px;cursor:pointer}
+.step button:hover{background:#171c26}
+.step output{flex:1;text-align:center;font:600 18px var(--serif)}
+select{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:#0b0e14;color:var(--ink);padding:0 10px;font:inherit}
+.go{display:block;width:100%;margin-top:6px;padding:14px;border:0;border-radius:12px;cursor:pointer;
+  background:linear-gradient(180deg,#f6b553,#d98a1f);color:#1b1206;font:600 18px var(--serif);letter-spacing:.02em}
+.go:disabled{opacity:.6;cursor:wait}
+.hidden{display:none!important}
+.verdict{text-align:center;padding:8px 0 4px}
+.pct{font:600 clamp(64px,18vw,96px)/1 var(--serif);color:var(--flame2);text-shadow:0 0 28px rgba(244,166,58,.35)}
+.verdict p{margin:6px 0 0;color:var(--dim)}
+.whatifs{list-style:none;padding:0;margin:18px 0 0}
+.whatifs li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;margin:0 0 10px;font-size:15px}
+.bar{grid-column:1/-1;height:6px;border-radius:3px;background:#1d2330;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--flame);opacity:.75}
+.ghost-name{font:600 22px/1.2 var(--serif);margin:0}
+.ghost-meta{color:var(--dim);font-size:14px;margin:4px 0 12px}
+.tag{display:inline-block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid}
+.tag.lived{color:var(--lived);border-color:rgba(233,196,106,.45)}
+.tag.lost{color:var(--lost);border-color:rgba(138,148,166,.45)}
+.voice{font:18px/1.65 var(--serif);white-space:pre-wrap;min-height:4em;color:#efe8da}
+.voice.waiting::after{content:"the candle flickers…";color:var(--faint);font-style:italic;animation:pulse 1.5s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.convo .you{color:var(--dim);font-style:italic;margin:16px 0 6px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.btn{border:1px solid var(--line);background:#0b0e14;color:var(--ink);border-radius:10px;padding:9px 12px;cursor:pointer;font:inherit;font-size:14px}
+.btn:hover{border-color:var(--flame)}
+.ask{display:flex;gap:8px;margin-top:14px}
+.ask input{flex:1;min-width:0;height:44px;border-radius:10px;border:1px solid var(--line);background:#0b0e14;color:var(--ink);padding:0 12px;font:inherit}
+.ask button{flex:none}
+.souls{list-style:none;padding:0;margin:0}
+.souls li{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.souls li:first-child{border-top:0}
+.mini{flex:none;width:14px;height:26px;margin-top:3px;position:relative}
+.mini::before{content:"";position:absolute;bottom:0;left:3px;width:8px;height:15px;background:#d9ccb0;border-radius:2px}
+.mini::after{content:"";position:absolute;top:0;left:3px;width:8px;height:11px;border-radius:50%;background:radial-gradient(circle at 50% 70%,#fff3cf,var(--flame) 60%,transparent 72%);animation:flick 1.8s infinite}
+.souls b{font-family:var(--serif);font-weight:600}
+.souls span{display:block;color:var(--dim);font-size:14px}
+.note{color:var(--faint);font-size:13px;margin:12px 0 0}
+.how{color:var(--dim);font-size:15px}
+.how h2{color:var(--ink)}
+.how table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+.how td,.how th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+.how th{color:var(--faint);font-weight:500}
+a{color:var(--flame2)}
+footer{text-align:center;color:var(--faint);font-size:13px;margin-top:28px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="fog" aria-hidden="true"></div>
+<main>
+  <header>
+    <div class="candle" aria-hidden="true"><div class="glow"></div><div class="wax"></div><div class="wick"></div><div class="fl"></div></div>
+    <h1>Titanic Séance</h1>
+    <p class="lede">891 passengers left their fates in the ship's records. Tell them who you would have been in April 1912, and one of them will answer.</p>
+  </header>
+
+  <form class="card" id="form">
+    <h2>Your passage</h2>
+    <div class="field">
+      <span class="lab">Ticket</span>
+      <div class="seg">
+        <input type="radio" name="pclass" id="c1" value="1"><label for="c1">First<small>avg £84</small></label>
+        <input type="radio" name="pclass" id="c2" value="2"><label for="c2">Second<small>avg £21</small></label>
+        <input type="radio" name="pclass" id="c3" value="3" checked><label for="c3">Third<small>avg £14</small></label>
+      </div>
+    </div>
+    <div class="field">
+      <span class="lab">The 1912 manifest records you as</span>
+      <div class="seg two">
+        <input type="radio" name="sex" id="sw" value="1"><label for="sw">a woman</label>
+        <input type="radio" name="sex" id="sm" value="0" checked><label for="sm">a man</label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="age">Age</label>
+      <div class="age"><input type="range" id="age" min="0" max="80" value="25"><output id="ageOut">25</output></div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <span class="lab">Siblings or spouse aboard</span>
+        <div class="step" data-for="sibsp" data-max="4"><button type="button" aria-label="fewer">−</button><output id="sibsp">0</output><button type="button" aria-label="more">+</button></div>
+      </div>
+      <div class="field">
+        <span class="lab">Parents or children aboard</span>
+        <div class="step" data-for="parch" data-max="3"><button type="button" aria-label="fewer">−</button><output id="parch">0</output><button type="button" aria-label="more">+</button></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="port">You board at</label>
+        <select id="port">
+          <option value="S">Southampton, England</option>
+          <option value="C">Cherbourg, France</option>
+          <option value="Q">Queenstown, Ireland</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="lang">The spirit speaks</label>
+        <select id="lang"><option value="en">English</option><option value="hi">हिन्दी</option></select>
+      </div>
+    </div>
+    <button class="go" id="go" type="submit">Light the candle</button>
+  </form>
+
+  <section id="result" class="hidden" aria-live="polite">
+    <div class="card">
+      <div class="verdict">
+        <div class="pct" id="pct">–</div>
+        <p id="verdictText"></p>
+      </div>
+      <ul class="whatifs" id="whatifs"></ul>
+    </div>
+
+    <div class="card convo">
+      <p class="ghost-name" id="ghostName"></p>
+      <p class="ghost-meta" id="ghostMeta"></p>
+      <div id="thread"></div>
+      <div class="tools">
+        <button class="btn" type="button" id="speakBtn">Hear the voice</button>
+        <button class="btn" type="button" id="againBtn">Change your passage</button>
+      </div>
+      <form class="ask" id="askForm">
+        <input id="q" maxlength="300" placeholder="Ask the spirit something…" autocomplete="off">
+        <button class="btn" type="submit">Ask</button>
+      </form>
+      <p class="note">This is a real passenger. The spirit only knows their line in the manifest and the known facts of the night; anything beyond that, it will say the mist has taken.</p>
+    </div>
+
+    <div class="card">
+      <h2>Remember them</h2>
+      <ul class="souls" id="souls"></ul>
+      <p class="note">The passengers whose records are closest to yours. Names as written in the passenger list.</p>
+    </div>
+  </section>
+
+  <section class="card how">
+    <h2>How the spirits know</h2>
+    <p><b>TabPFN</b>, an open tabular foundation model, learned from the 891 passengers whose fate is recorded (the Kaggle Titanic training set). It ran once over every profile this form can make, 29,160 of them, so the server here only looks the answer up.</p>
+    <table id="cvTable"><tr><th>5-fold check on the 891</th><th>accuracy</th><th>AUC</th></tr></table>
+    <p><b>Gemma 4</b>, Google's open-weight model, gives the closest real passenger a voice. Python picks the passenger and computes every number first; Gemma is told to speak only those numbers and the manifest, and not to invent a life story for someone who really lived.</p>
+    <p>Code: <a href="https://github.com/starkhushi/titanic-seance">github.com/starkhushi/titanic-seance</a></p>
+  </section>
+
+  <footer>Made for the DEV Hacktoberfest “Ghost in the Machine” challenge.<br>In memory of everyone aboard, 10–15 April 1912.</footer>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const pct = p => Math.round(p * 100) + "%";
+const CLASS = {1: "first class", 2: "second class", 3: "third class"};
+let reading = null, history = [], busy = false;
+
+$("age").addEventListener("input", e => $("ageOut").textContent = e.target.value);
+document.querySelectorAll(".step").forEach(s => {
+  const out = $(s.dataset.for), max = +s.dataset.max, [minus, plus] = s.querySelectorAll("button");
+  minus.onclick = () => out.textContent = Math.max(0, +out.textContent - 1);
+  plus.onclick = () => out.textContent = Math.min(max, +out.textContent + 1);
+});
+
+function profile() {
+  return {
+    pclass: +document.querySelector("input[name=pclass]:checked").value,
+    female: document.querySelector("input[name=sex]:checked").value === "1",
+    age: +$("age").value, sibsp: +$("sibsp").textContent, parch: +$("parch").textContent,
+    port: $("port").value,
+  };
+}
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function soulLine(s) {
+  const age = s.age == null ? "age not recorded" : `age ${s.age}`;
+  return `${age} · ${CLASS[s.pclass]} · boarded at ${s.port_name}` + (s.cabin ? ` · cabin ${s.cabin}` : "");
+}
+
+function countUp(target) {
+  const node = $("pct"), end = Math.round(target * 100), t0 = performance.now();
+  node.textContent = end + "%";
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let done = false;
+  setTimeout(() => { done = true; node.textContent = end + "%"; }, 1500);   // rAF can stall in background tabs
+  const tick = now => {
+    if (done) return;
+    const k = Math.min(1, (now - t0) / 1400);
+    const flicker = k < 1 ? Math.round((Math.random() - .5) * 18 * (1 - k)) : 0;
+    node.textContent = Math.max(0, Math.min(100, Math.round(end * k) + flicker)) + "%";
+    if (k < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function render(r) {
+  $("result").classList.remove("hidden");
+  countUp(r.prob);
+  $("verdictText").textContent = `chance you would have survived the night · ${pct(r.base_rate)} of all 891 did`;
+  const ul = $("whatifs"); ul.replaceChildren();
+  r.what_ifs.slice(0, 4).forEach(w => {
+    const li = el("li");
+    li.append(el("span", null, "If " + w.change), el("b", null, pct(w.prob)));
+    const bar = el("div", "bar"), fill = el("i"); fill.style.width = pct(w.prob); bar.append(fill); li.append(bar);
+    ul.append(li);
+  });
+  const g = r.souls[0];
+  $("ghostName").textContent = g.name;
+  $("ghostMeta").replaceChildren(document.createTextNode(soulLine(g) + " · "),
+    el("span", "tag " + (g.survived ? "lived" : "lost"), g.survived ? "survived" : "lost"));
+  const souls = $("souls"); souls.replaceChildren();
+  r.souls.forEach(s => {
+    const li = el("li"), txt = el("div");
+    txt.append(el("b", null, s.name), el("span", null, soulLine(s) + " · " + (s.survived ? "survived" : "lost in the sinking")));
+    li.append(el("i", "mini"), txt); souls.append(li);
+  });
+}
+
+async function streamInto(node, body) {
+  node.classList.add("waiting");
+  let text = "";
+  try {
+    const res = await fetch("/api/speak", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+    if (!res.ok) throw new Error(res.status);
+    const reader = res.body.getReader(), dec = new TextDecoder();
+    for (;;) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      text += dec.decode(value, {stream: true});
+      node.classList.remove("waiting");
+      node.textContent = text.replace(/\*\*/g, "");
+    }
+  } catch (e) {
+    text = "The candle gutters out. Try again in a moment.";
+  }
+  node.classList.remove("waiting");
+  node.textContent = text.replace(/\*\*/g, "").trim();
+  return node.textContent;
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (busy) return;
+  busy = true; $("go").disabled = true; speechSynthesis.cancel();
+  try {
+    const p = profile();
+    const res = await fetch("/api/reading", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(p)});
+    reading = await res.json();
+    history = [];
+    render(reading);
+    $("result").scrollIntoView({behavior: "smooth", block: "start"});
+    const thread = $("thread"); thread.replaceChildren();
+    const v = el("div", "voice"); thread.append(v);
+    const said = await streamInto(v, {profile: p, lang: $("lang").value});
+    history.push({role: "ghost", content: said});
+  } finally {
+    busy = false; $("go").disabled = false;
+  }
+});
+
+$("askForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const q = $("q").value.trim();
+  if (!q || !reading || busy) return;
+  busy = true; $("q").value = "";
+  const thread = $("thread");
+  thread.append(el("p", "you", "You: " + q));
+  const v = el("div", "voice"); thread.append(v);
+  const said = await streamInto(v, {profile: reading.profile, lang: $("lang").value, question: q, history});
+  history.push({role: "user", content: q}, {role: "ghost", content: said});
+  history = history.slice(-6);
+  busy = false;
+});
+
+$("speakBtn").onclick = () => {
+  const voices = [...document.querySelectorAll("#thread .voice")];
+  if (!voices.length || !("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(voices[voices.length - 1].textContent);
+  u.lang = $("lang").value === "hi" ? "hi-IN" : "en-GB";
+  u.pitch = .55; u.rate = .82;
+  speechSynthesis.speak(u);
+};
+$("againBtn").onclick = () => { speechSynthesis.cancel(); $("form").scrollIntoView({behavior: "smooth"}); };
+
+// shareable links: /?class=1&sex=f&age=30&sibsp=0&parch=0&port=S&lang=en starts the seance
+const qs = new URLSearchParams(location.search);
+if (qs.has("class") || qs.has("age")) {
+  const c = qs.get("class"); if (["1", "2", "3"].includes(c)) $("c" + c).checked = true;
+  if (qs.get("sex")) $(qs.get("sex").startsWith("f") ? "sw" : "sm").checked = true;
+  const n = (k, lo, hi) => { const v = parseInt(qs.get(k), 10); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : null; };
+  const a = n("age", 0, 80); if (a != null) { $("age").value = a; $("ageOut").textContent = a; }
+  const s = n("sibsp", 0, 4); if (s != null) $("sibsp").textContent = s;
+  const p = n("parch", 0, 3); if (p != null) $("parch").textContent = p;
+  if (["S", "C", "Q"].includes(qs.get("port"))) $("port").value = qs.get("port");
+  if (["en", "hi"].includes(qs.get("lang"))) $("lang").value = qs.get("lang");
+  $("form").requestSubmit();
+}
+
+fetch("/api/reading", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"})
+  .then(r => r.json()).then(r => {
+    const t = $("cvTable").tBodies[0], c = r.cv;
+    [["TabPFN v2", c.tabpfn.acc, c.tabpfn.auc], ["Logistic regression", c.logistic.acc, c.logistic.auc],
+     ["“Women survive” rule", c.women_survive.acc, null]].forEach(([n, a, u]) => {
+      const tr = el("tr"); tr.append(el("td", null, n), el("td", null, a.toFixed(3)), el("td", null, u == null ? "–" : u.toFixed(3)));
+      t.append(tr);
+    });
+  }).catch(() => {});
+</script>
+</body>
+</html>

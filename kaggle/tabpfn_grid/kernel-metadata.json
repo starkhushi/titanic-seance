@@ -1,0 +1,13 @@
+{
+  "id": "starkhushi/titanic-seance-tabpfn-grid",
+  "title": "titanic-seance-tabpfn-grid",
+  "code_file": "tabpfn_grid.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "competition_sources": ["titanic"],
+  "dataset_sources": [],
+  "kernel_sources": []
+}
