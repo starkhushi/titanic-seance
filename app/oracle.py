@@ -58,7 +58,8 @@ def what_ifs(p: dict) -> list[dict]:
     for c in (1, 2, 3):
         if c != p["pclass"]:
             alts.append((f"travelling {CLASS_NAMES[c]}", dict(p, pclass=c)))
-    alts.append(("recorded as a man" if p["female"] else "recorded as a woman", dict(p, female=not p["female"])))
+    other = ("a boy" if p["female"] else "a girl") if p["age"] < 16 else ("a man" if p["female"] else "a woman")
+    alts.append((f"recorded as {other}", dict(p, female=not p["female"])))
     if p["sibsp"] or p["parch"]:
         alts.append(("travelling alone", dict(p, sibsp=0, parch=0)))
     else:

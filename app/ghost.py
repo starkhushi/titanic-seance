@@ -46,6 +46,7 @@ The visitor asked the spirits what their own fate would have been had they saile
 How to speak:
 - First person, as yourself, to the visitor as "you". Hushed, a little eerie, old-fashioned, never comic. Real people died that night: no gore, no jokes about death.
 - Do not invent anything about your life that is not in your manifest line: no hometown, job, spouse's or children's names, reasons for travelling, or what you did that night. If asked, say the mist has taken that memory, and talk about what you do know.
+- Describe the night only as everyone aboard shared it (the cold, the dark, too few lifeboats, the Carpathia at dawn). Never claim a personal moment such as what you saw, felt, heard or did, or which lifeboat you were in.
 - Quote the visitor's chance exactly as given (for example "{pct}"). Never invent other percentages. You may mention one or two of the what-ifs.
 - If your own fate differs from what the numbers predict for the visitor, you may remark on it.
 - {length}
@@ -53,7 +54,8 @@ How to speak:
 
 FIRST = "Speak to the visitor now: tell them who you were, what happened to you, and what the numbers say their fate would have been."
 LANG = {"en": "Speak English.",
-        "hi": "Speak Hindi in Devanagari script. Keep names, the ship's name and the numbers as they are."}
+        "hi": "Speak only Hindi, in Devanagari script, for the whole reply. Keep names, the ship's name and the numbers as they are."}
+LANG_NUDGE = {"en": "", "hi": "\n\n(उत्तर पूरी तरह हिन्दी में, देवनागरी लिपि में दें।)"}
 
 
 class LLMError(RuntimeError):
@@ -88,7 +90,8 @@ def visitor_line(p: dict) -> str:
         fam.append(f"{p['sibsp']} sibling(s)/spouse")
     if p["parch"]:
         fam.append(f"{p['parch']} parent(s)/child(ren)")
-    return (f"{'woman' if p['female'] else 'man'} of {p['age']}, {CLASS_NAMES[p['pclass']]}, boarding at "
+    who = ("girl" if p["female"] else "boy") if p["age"] < 16 else ("woman" if p["female"] else "man")
+    return (f"{who} of {p['age']}, {CLASS_NAMES[p['pclass']]}, boarding at "
             f"{PORT_NAMES[p['port']]}, " + (f"travelling with {' and '.join(fam)}" if fam else "travelling alone"))
 
 
@@ -136,6 +139,7 @@ def stream_reading(r: dict, lang: str = "en", history: list[dict] | None = None,
         prompt = (f"The seance so far:\n{turns}\n\n" if turns else "") + f"Visitor: {question}\n\nAnswer as the ghost."
     else:
         prompt = FIRST
+    prompt += LANG_NUDGE.get(lang, "")
     try:
         yield from stream(system, prompt, max_tokens=400, temperature=0.8)
     except LLMError as e:
@@ -171,7 +175,8 @@ def _stream_gemini(system: str, prompt: str, max_tokens: int, temperature: float
                                       thinkingConfig=dict(thinkingLevel="minimal")))
     # Free-tier Gemma endpoints throw sporadic 500/429s: retry with backoff, then try the
     # other Gemma 4 model (separate quota) before giving up.
-    plan = [(GEMINI_MODEL, 0), (GEMINI_MODEL, 1.5), (GEMINI_FALLBACK_MODEL, 0), (GEMINI_FALLBACK_MODEL, 3)]
+    plan = [(GEMINI_MODEL, 0), (GEMINI_MODEL, 1.5), (GEMINI_FALLBACK_MODEL, 0), (GEMINI_FALLBACK_MODEL, 3),
+            (GEMINI_MODEL, 5)]
     last = None
     for model, wait in plan:
         if not model:
