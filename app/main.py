@@ -32,9 +32,19 @@ class Speak(BaseModel):
     history: list[dict] = Field(default_factory=list, max_length=12)
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def index() -> FileResponse:
     return FileResponse(ROOT / "static" / "index.html")
+
+
+@app.get("/healthz/llm")
+def healthz_llm() -> dict:
+    """One tiny Gemma call, so a bad key or quota shows up without reading server logs."""
+    try:
+        text = "".join(ghost.stream("Reply with one word.", "Say: ready", max_tokens=20, temperature=0.0))
+        return dict(ok=True, reply=text.strip()[:40])
+    except ghost.LLMError as e:
+        return dict(ok=False, error=str(e)[:300])
 
 
 @app.get("/healthz")
